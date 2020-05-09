@@ -1,55 +1,178 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Startup</title>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+<head>
+  <meta charset="utf-8" />
+  <title>Phaser Pong</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser-ce@2.13.0/build/phaser.min.js"></script>
+</head>
 
-    <!-- Bootstrap CSS from a CDN. This way you don't have to include the bootstrap file yourself -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+<body>
+  <script>
+    var game = new Phaser.Game(560, 420, Phaser.CANVAS, null, {
+      preload: preload,
+      create: create,
+      update: update
+    });
+    var ball;
+    var net, newNet, netInfo; //net variables
+    var paddleL, paddleR; //paddles
+    var scoreL = 0,
+      scoreR = 0,
+      scoreLimit = 3; //scores
+    var textStyle, winText, loseText, scoreTextL, scoreTextR; //texts
+    var playing = false;
+    var startButton, endButton; //buttons
 
-    <!-- Your own stylesheet -->
-    <link rel="stylesheet"  href="style.css">
-  </head>
-  <body>
-    
-      <header class="startup text-center text-black d-flex">
-        <div class="container my-auto">
-          <div class="row">
-            <div class="col-lg-12 my-auto">
-              <h1 class="text-uppercase faded">
-                <strong>Something big coming up in 4 turns</strong>
-              </h1>
-              <hr>
-            </div>
-            <div class="col-lg-12 my-auto">
-              <!-- Begin Mailchimp Signup Form -->
-              <link href="//cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css" rel="stylesheet" type="text/css">
-              <style type="text/css">
-              #mc_embed_signup{clear:left; font:14px Helvetica,Arial,sans-serif; width:100%;}
-              /* Add your own Mailchimp form style overrides in your site stylesheet or in this style block.
-                  We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
-              </style>
-              <div id="mc_embed_signup">
-              <form action="https://gmail.us20.list-manage.com/subscribe/post?u=f7adf740bfe5154ae0e9c4602&amp;id=2d8e080b1b" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
-                <div id="mc_embed_signup_scroll">
-                <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
-                <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_f7adf740bfe5154ae0e9c4602_2d8e080b1b" tabindex="-1" value=""></div>
-                <div class="clear"><input class="btn btn-dark btn-xl" type="submit" value="Don't Even Bro" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
-                </div>
-              </form>
-              </div>
+    //game functions
+    function preload() {
+      game.scale.ScaleMode = Phaser.ScaleManager.SHOW_ALL;
+      game.scale.pageAlignHorizontally = true;
+      game.scale.pageAlignVertically = true;
+      game.stage.backgroundColor - 'black';
+      game.load.image('ball', src = 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/ball.png');
+      game.load.image('paddleL', 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/paddle.png');
+      game.load.image('paddleR', 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/paddle.png');
+      game.load.image('net', 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/net.png');
+      game.load.image('start', 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/start.png');
+      game.load.image('win', 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/win.png');
+      game.load.image('lose', 'https://raw.githubusercontent.com/dreader0/Phaser-Pong/master/img/lose.png');
+    }
 
-              <!--End mc_embed_signup-->
-            </div>
-          </div>
-        </div>
-      </header>   
+    function create() {
+      game.physics.startSystem(Phaser.Physics.ARCADE);
+      ball = game.add.sprite(game.world.width / 2, game.world.height / 2, 'ball');
+      ball.anchor.set(0.5);
+      game.physics.enable(ball, Phaser.Physics.ARCADE);
+      ball.body.velocity.set(300, -300);
+      ball.body.collideWorldBounds = true;
+      ball.body.bounce.set(1);
 
-    <!-- Bootstrp Scripts -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  </body>
+      initNet();
+
+      winText = game.add.text(game.world.width / 2, game.world.height / 2, 'You Win!', textStyle);
+      winText.anchor.set(0.5);
+      winText.visible = false;
+      loseText = game.add.text(game.world.width / 2, game.world.height / 2, 'You Lose!', textStyle);
+      loseText.anchor.set(0.5);
+      loseText.visible = false;
+
+      startButton = game.add.button(game.world.width * 0.5, game.world.height * 0.5, 'start', startGame, this);
+      startButton.anchor.set(0.5);
+    }
+
+    function update() {
+      game.physics.arcade.collide(ball, paddleL, ballHitPaddle);
+      game.physics.arcade.collide(ball, paddleR, ballHitPaddle);
+
+      if (playing) {
+        paddleL.y = game.input.y || game.world.height * 0.5;
+        if (paddleR.y < ball.y) {
+          paddleR.y += 1.5;
+        } else if (paddleR.y > ball.y) {
+          paddleR.y -= 1.5;
+        }
+      }
+    }
+
+    //helper functions
+    function initNet() {
+      netInfo = {
+        width: 5,
+        height: 10,
+        row: game.world.height / 10,
+        offset: 10,
+        padding: 10
+      };
+      net = game.add.group();
+      for (r = 0; r < netInfo.row; r++) {
+        var netX = game.world.width / 2;
+        var netY = (r * (netInfo.height + netInfo.padding)) + netInfo.offset;
+        newNet = game.add.sprite(netX, netY, 'net');
+        newNet.anchor.set(0.5);
+        net.add(newNet);
+      }
+    }
+
+    function ballHitPaddle(ball, paddle) {
+      ball.body.velocity.y = -1 * 5 * (paddle.y - ball.y);
+      ball.body.velocity.x *= 1.05;
+    }
+
+    function ballLeaveScreen() {
+      if (ball.x < game.world.width / 2) {
+        scoreR++;
+        scoreTextR.setText(scoreR);
+      } else if (ball.x > game.world.width / 2) {
+        scoreL++;
+        scoreTextL.setText(scoreL);
+      }
+      if (scoreL == scoreLimit || scoreR == scoreLimit) {
+        endGame();
+      } else {
+        reset();
+      }
+    }
+
+    function reset() {
+      ball.reset(game.world.width / 2, game.world.height / 2);
+      paddleL.reset(game.world.width - game.world.width, game.world.height / 2);
+      paddleR.reset(game.world.width, game.world.height / 2);
+      game.input.onDown.addOnce(function () {
+        ball.body.velocity.set(200, -100);
+      }, this);
+    }
+
+    function startGame() {
+      startButton.destroy();
+      ball.reset(game.world.width / 2, game.world.height / 2)
+      ball.body.velocity.set(200, -100);
+      game.physics.arcade.checkCollision.left = false;
+      game.physics.arcade.checkCollision.right = false;
+      ball.checkWorldBounds = true;
+      ball.events.onOutOfBounds.add(ballLeaveScreen, this);
+
+      paddleL = game.add.sprite(game.world.width - game.world.width, game.world.height / 2, 'paddleL');
+      paddleL.anchor.set(-0.5, 0.5);
+      paddleR = game.add.sprite(game.world.width, game.world.height / 2, 'paddleR');
+      paddleR.anchor.set(1.5, 0.5);
+      game.physics.enable(paddleL, Phaser.Physics.ARCADE);
+      game.physics.enable(paddleR, Phaser.Physics.ARCADE);
+      paddleL.body.immovable = true;
+      paddleR.body.immovable = true;
+
+      textStyle = {
+        font: '48px Helvetica',
+        fill: '#FFFFFF'
+      };
+      scoreTextL = game.add.text(game.world.width / 2 - 50, 5, scoreL, textStyle);
+      scoreTextL.anchor.set(0.5, 0);
+      scoreTextR = game.add.text(game.world.width / 2 + 50, 5, scoreR, textStyle);
+      scoreTextR.anchor.set(0.5, 0);
+      playing = true;
+    }
+
+    function endGame() {
+      if (scoreL == scoreLimit) {
+        endButton = game.add.button(game.world.width * 0.5, game.world.height * 0.5, 'win', function () {
+          location.reload();
+        }, this);
+      }
+      if (scoreR == scoreLimit) {
+        endButton = game.add.button(game.world.width * 0.5, game.world.height * 0.5, 'lose', function () {
+          location.reload();
+        }, this);
+      }
+      endButton.anchor.set(0.5);
+      playing = false;
+    }
+  </script>
+</body>
+
 </html>
